@@ -20,7 +20,7 @@ export default function HeaderBar() {
       ? 'Subah ki shuruaat strong!'
       : hour < 17
         ? 'You can do it, I believe in you!'
-        : 'Shaam ki finishing strong';
+        : 'You can do it, I believe in you!';
 
   return (
     <header className="sticky top-0 z-20 backdrop-blur supports-[backdrop-filter]:bg-white/40 bg-white/60 dark:bg-neutral-900/60 border-b border-black/5 dark:border-white/10">
