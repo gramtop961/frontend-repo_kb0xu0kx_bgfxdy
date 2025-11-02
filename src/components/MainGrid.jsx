@@ -4,6 +4,8 @@ import PhasesDashboard from './PhasesDashboard';
 import MinuteOfCalm from './MinuteOfCalm';
 import TrackersPanel from './TrackersPanel';
 import RewardsPanel from './RewardsPanel';
+import HabitsPanel from './HabitsPanel';
+import ReflectionPanel from './ReflectionPanel';
 
 export default function MainGrid() {
   return (
@@ -11,6 +13,8 @@ export default function MainGrid() {
       <div className="lg:col-span-2 space-y-6">
         <QuoteAndMood />
         <PhasesDashboard />
+        <HabitsPanel />
+        <ReflectionPanel />
       </div>
       <div className="lg:col-span-1 space-y-6">
         <MinuteOfCalm />

@@ -41,13 +41,14 @@ function PhaseCard({ title, subtitle, color, items, action, active, children }) 
 export default function PhasesDashboard() {
   const [started, setStarted] = useState(null); // 'p1' | 'p2' | 'p3' | null
   const [toast, setToast] = useState('');
+  const [p1Step, setP1Step] = useState(() => {
+    try { const raw = localStorage.getItem('p1_step'); return raw ? Number(raw) : 0; } catch { return 0; }
+  });
   const [p2Step, setP2Step] = useState(() => {
-    try {
-      const raw = localStorage.getItem('p2_step');
-      return raw ? Number(raw) : 0; // 0..3
-    } catch {
-      return 0;
-    }
+    try { const raw = localStorage.getItem('p2_step'); return raw ? Number(raw) : 0; } catch { return 0; }
+  });
+  const [p3Step, setP3Step] = useState(() => {
+    try { const raw = localStorage.getItem('p3_step'); return raw ? Number(raw) : 0; } catch { return 0; }
   });
 
   useEffect(() => {
@@ -69,22 +70,70 @@ export default function PhasesDashboard() {
     }
   };
 
-  const setStep = (n) => {
-    setP2Step(n);
-    try { localStorage.setItem('p2_step', String(n)); } catch {}
+  const handleStep = (phase, n) => {
+    const setFns = { p1: setP1Step, p2: setP2Step, p3: setP3Step };
+    const key = `${phase}_step`;
+    setFns[phase](n);
+    try { localStorage.setItem(key, String(n)); } catch {}
+
     if (n === 3) {
-      setToast('Phase 2 completed — Rebuild unlocked!');
-      reward('Phase 2 Completed', 20);
-      if (navigator?.vibrate) {
-        try { navigator.vibrate([15, 30, 15]); } catch {}
-      }
+      setToast(`${phase.toUpperCase()} completed — well done!`);
+      reward(`${phase.toUpperCase()} Completed`, 20);
+      if (navigator?.vibrate) { try { navigator.vibrate([15, 30, 15]); } catch {} }
     } else {
-      setToast(`Phase 2: Step ${n} done`);
-      reward(`Phase 2: Step ${n} completed`, 8);
-      if (navigator?.vibrate) {
-        try { navigator.vibrate(10); } catch {}
-      }
+      setToast(`${phase.toUpperCase()}: Step ${n} done`);
+      reward(`${phase.toUpperCase()}: Step ${n} completed`, 8);
+      if (navigator?.vibrate) { try { navigator.vibrate(10); } catch {} }
     }
+  };
+
+  const Stepper = ({ phase, value, colorClass }) => (
+    <div className={`mt-4 rounded-xl border p-3 ${colorClass.container}`}>
+      <p className={`text-xs font-medium mb-2 flex items-center gap-2 ${colorClass.text}`}>
+        <ChevronRight className="h-4 w-4" /> {phase.toUpperCase()} Steps
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {[1, 2, 3].map((n) => (
+          <button
+            key={n}
+            onClick={() => handleStep(phase, n)}
+            className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${
+              value >= n ? `${colorClass.activeBtn}` : `${colorClass.idleBtn}`
+            }`}
+            aria-pressed={value >= n}
+          >
+            {value >= n ? 'Completed' : `Step ${n}`}
+          </button>
+        ))}
+      </div>
+      <p className={`mt-2 text-[11px] ${colorClass.hint}`}>
+        {value === 3 ? 'All three steps done — awesome progress!' : 'Tap each step as you finish it. Last step marks completion.'}
+      </p>
+    </div>
+  );
+
+  const styles = {
+    p1: {
+      container: 'border-sky-200 bg-sky-50',
+      text: 'text-sky-800',
+      activeBtn: 'bg-sky-600 text-white border-sky-700',
+      idleBtn: 'bg-white text-sky-700 border-sky-300 hover:bg-sky-100',
+      hint: 'text-sky-700',
+    },
+    p2: {
+      container: 'border-emerald-200 bg-emerald-50',
+      text: 'text-emerald-800',
+      activeBtn: 'bg-emerald-600 text-white border-emerald-700',
+      idleBtn: 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-100',
+      hint: 'text-emerald-700',
+    },
+    p3: {
+      container: 'border-amber-200 bg-amber-50',
+      text: 'text-amber-800',
+      activeBtn: 'bg-amber-600 text-white border-amber-700',
+      idleBtn: 'bg-white text-amber-700 border-amber-300 hover:bg-amber-100',
+      hint: 'text-amber-700',
+    },
   };
 
   return (
@@ -122,7 +171,9 @@ export default function PhasesDashboard() {
             onClick: () => trigger('p1', 'Phase 1 started – chhote steps daily!'),
           }}
           active={started === 'p1'}
-        />
+        >
+          <Stepper phase="p1" value={p1Step} colorClass={styles.p1} />
+        </PhaseCard>
 
         <PhaseCard
           title="Phase 2: Rebuild Energy & Relations"
@@ -141,31 +192,7 @@ export default function PhasesDashboard() {
           }}
           active={started === 'p2'}
         >
-          {/* 3 steps inline stepper for Phase 2 */}
-          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-            <p className="text-xs font-medium text-emerald-800 mb-2 flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" /> Phase 2 Steps
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setStep(n)}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${
-                    p2Step >= n
-                      ? 'bg-emerald-600 text-white border-emerald-700'
-                      : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                  }`}
-                  aria-pressed={p2Step >= n}
-                >
-                  {p2Step >= n ? 'Completed' : `Step ${n}`}
-                </button>
-              ))}
-            </div>
-            <p className="mt-2 text-[11px] text-emerald-700">
-              {p2Step === 3 ? 'All three steps done — awesome progress!' : 'Tap each step as you finish it. Last step marks Phase 2 completed.'}
-            </p>
-          </div>
+          <Stepper phase="p2" value={p2Step} colorClass={styles.p2} />
         </PhaseCard>
 
         <PhaseCard
@@ -184,7 +211,9 @@ export default function PhasesDashboard() {
             onClick: () => trigger('p3', 'Phase 3 – rise and shine, Gaurav!'),
           }}
           active={started === 'p3'}
-        />
+        >
+          <Stepper phase="p3" value={p3Step} colorClass={styles.p3} />
+        </PhaseCard>
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3 text-xs">
