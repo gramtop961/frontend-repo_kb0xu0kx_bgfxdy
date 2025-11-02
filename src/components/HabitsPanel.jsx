@@ -7,8 +7,8 @@ const DEFAULT_HABITS = [
   { id: 'no_alcohol', label: 'Alcohol zero' },
   { id: 'sleep_11', label: 'Sleep by 11' },
   { id: 'mobility', label: 'Workout / Mobility' },
-  { id: 'read10', label: 'Read 10 pages' },
-  { id: 'reconnect', label: '1 connection message' },
+  { id: 'learn_skill', label: 'Learn new skill' },
+  { id: 'reconnect', label: 'Message or call someone you love' },
 ];
 
 function todayKey() {

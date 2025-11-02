@@ -76,7 +76,7 @@ export default function PhasesDashboard() {
     setFns[phase](n);
     try { localStorage.setItem(key, String(n)); } catch {}
 
-    if (n === 3) {
+    if (n === 4) {
       setToast(`${phase.toUpperCase()} completed — well done!`);
       reward(`${phase.toUpperCase()} Completed`, 20);
       if (navigator?.vibrate) { try { navigator.vibrate([15, 30, 15]); } catch {} }
@@ -92,8 +92,8 @@ export default function PhasesDashboard() {
       <p className={`text-xs font-medium mb-2 flex items-center gap-2 ${colorClass.text}`}>
         <ChevronRight className="h-4 w-4" /> {phase.toUpperCase()} Steps
       </p>
-      <div className="grid grid-cols-3 gap-2">
-        {[1, 2, 3].map((n) => (
+      <div className="grid grid-cols-4 gap-2">
+        {[1, 2, 3, 4].map((n) => (
           <button
             key={n}
             onClick={() => handleStep(phase, n)}
@@ -107,7 +107,7 @@ export default function PhasesDashboard() {
         ))}
       </div>
       <p className={`mt-2 text-[11px] ${colorClass.hint}`}>
-        {value === 3 ? 'All three steps done — awesome progress!' : 'Tap each step as you finish it. Last step marks completion.'}
+        {value === 4 ? 'All four steps done — awesome progress!' : 'Tap each step as you finish it. Last step marks completion.'}
       </p>
     </div>
   );
@@ -182,8 +182,8 @@ export default function PhasesDashboard() {
           items={[
             'Workouts + mobility routine',
             'Simple meal templates – thali balance',
-            'Re-connect prompts – one message a day',
-            'Daily reading – 10 pages habit',
+            'Message or call someone you love',
+            'Learn new skill',
           ]}
           action={{
             label: 'Begin Rebuild',

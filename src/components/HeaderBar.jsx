@@ -65,7 +65,7 @@ export default function HeaderBar() {
     : hour < 12
       ? 'Subah ki shuruaat strong!'
       : hour < 17
-        ? 'Dupahar ka momentum on'
+        ? 'You can do it, I believe in you!'
         : 'Shaam ki finishing strong';
 
   return (
