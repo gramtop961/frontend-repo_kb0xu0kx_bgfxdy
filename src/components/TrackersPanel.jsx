@@ -1,12 +1,52 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+const STORAGE_KEY = 'trackers_v1';
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function save(obj) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); } catch {}
+}
 
 export default function TrackersPanel() {
-  const [water, setWater] = useState(0);
-  const [meals, setMeals] = useState({ breakfast: false, lunch: false, dinner: false });
+  const today = todayKey();
+  const [store, setStore] = useState(load);
+  const snap = store[today] || { water: 0, meals: { breakfast: false, lunch: false, dinner: false } };
+
+  const [water, setWater] = useState(snap.water || 0);
+  const [meals, setMeals] = useState(snap.meals || { breakfast: false, lunch: false, dinner: false });
+
+  useEffect(() => {
+    const next = { ...store, [today]: { water, meals } };
+    setStore(next);
+    save(next);
+  }, [water, meals]);
 
   const progress = useMemo(() => {
-    const totalChecks = water / 8 + Object.values(meals).filter(Boolean).length; // water goal 8
-    return Math.min(100, Math.round((totalChecks / (1 + 3)) * 100));
+    const waterPart = Math.min(1, water / 8);
+    const mealsPart = Object.values(meals).filter(Boolean).length / 3;
+    return Math.min(100, Math.round(((waterPart + mealsPart) / 2) * 100));
+  }, [water, meals]);
+
+  useEffect(() => {
+    if (water === 8) {
+      window.dispatchEvent(new CustomEvent('reward-earned', { detail: { title: 'Hydration goal met', points: 8 } }));
+    }
+    if (Object.values(meals).every(Boolean)) {
+      window.dispatchEvent(new CustomEvent('reward-earned', { detail: { title: 'All meals tracked', points: 6 } }));
+    }
   }, [water, meals]);
 
   return (
@@ -23,12 +63,14 @@ export default function TrackersPanel() {
             <button
               onClick={() => setWater((w) => Math.max(0, w - 1))}
               className="px-3 py-1.5 text-sm rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+              aria-label="Decrease water"
             >
               -
             </button>
             <button
               onClick={() => setWater((w) => Math.min(8, w + 1))}
               className="px-3 py-1.5 text-sm rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+              aria-label="Increase water"
             >
               +
             </button>
@@ -47,6 +89,7 @@ export default function TrackersPanel() {
                     ? 'bg-green-100/70 dark:bg-green-900/30 border-green-400/40'
                     : 'bg-white/60 dark:bg-neutral-900/40 border-black/10 dark:border-white/10'
                 }`}
+                aria-pressed={meals[k]}
               >
                 {k}
               </button>
