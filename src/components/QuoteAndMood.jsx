@@ -1,64 +1,60 @@
-import { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react';
+import { Heart, Smile, Meh, Frown, Zap } from 'lucide-react';
 
-const QUOTES = [
-  'Aaj jo tu control kar sakta hai, wahi jeet ka start hai.',
-  'Chhote steps, bada comeback. Bas aage badhta reh.',
-  'Shanti se kaam, izzat se jeet.',
-  'Kal ki galti se seekh, aaj ko jee, kal ko bana.',
-  'Tu broken nahi, bas pause par tha — ab gently restart.',
-  'Har subah ek naya chance hota hai.',
-  'Discipline se freedom milti hai.'
-]
+const moods = [
+  { key: 'calm', label: 'Calm', color: 'bg-emerald-500', ring: 'ring-emerald-300', icon: Heart, tip: 'Saans ko dheere rakho. Slow and steady.' },
+  { key: 'tired', label: 'Tired', color: 'bg-amber-500', ring: 'ring-amber-300', icon: Meh, tip: '5-minute stretch aur pani. Firse energy aayegi.' },
+  { key: 'stressed', label: 'Stressed', color: 'bg-rose-500', ring: 'ring-rose-300', icon: Frown, tip: '4-7-8 breathing try karo. Tum sambhal loge.' },
+  { key: 'hopeful', label: 'Hopeful', color: 'bg-sky-500', ring: 'ring-sky-300', icon: Smile, tip: 'Bas aise hi chalte rehna. Small wins matter.' },
+  { key: 'focused', label: 'Focused', color: 'bg-indigo-600', ring: 'ring-indigo-300', icon: Zap, tip: '25 min deep work + 5 min break. You got this.' },
+];
 
-const MOODS = [
-  { key: 'calm', label: 'Calm', color: 'bg-teal-100 text-teal-800 border-teal-200' },
-  { key: 'tired', label: 'Tired', color: 'bg-slate-100 text-slate-800 border-slate-200' },
-  { key: 'stressed', label: 'Stressed', color: 'bg-rose-100 text-rose-800 border-rose-200' },
-  { key: 'hopeful', label: 'Hopeful', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  { key: 'focused', label: 'Focused', color: 'bg-blue-100 text-blue-800 border-blue-200' }
-]
+const quotes = [
+  'Jitna rukoge, utna hi wapas daudoge. Start small, start now.',
+  'Discipline is self-love in action.',
+  'Kal se nahi, aaj se — bas ek chhota step.',
+  'Your future self is watching. Make him proud.',
+  'The comeback is always stronger than the setback.'
+];
 
-export default function QuoteAndMood({ onMoodChange }) {
-  const [mood, setMood] = useState('hopeful')
+export default function QuoteAndMood() {
+  const [active, setActive] = useState('hopeful');
 
   const quote = useMemo(() => {
-    const idx = new Date().getDay() % QUOTES.length
-    return QUOTES[idx]
-  }, [])
-
-  const handleMood = (m) => {
-    setMood(m)
-    onMoodChange?.(m)
-  }
+    const dayIdx = new Date().getDate() % quotes.length;
+    return quotes[dayIdx];
+  }, []);
 
   return (
-    <section className="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-5 shadow-sm">
-      <div className="mb-4">
-        <div className="text-xs tracking-wide text-blue-700 font-semibold mb-1">Aaj ka Power Quote</div>
-        <p className="text-slate-800 text-lg leading-relaxed">“{quote}”</p>
-      </div>
-
-      <div>
-        <div className="text-xs tracking-wide text-blue-700 font-semibold mb-2">Mood Meter</div>
-        <div className="flex flex-wrap gap-2">
-          {MOODS.map(m => (
-            <button
-              key={m.key}
-              onClick={() => handleMood(m.key)}
-              className={`px-3 py-1.5 text-sm rounded-full border ${m.color} ${mood === m.key ? 'ring-2 ring-offset-2 ring-blue-300' : ''}`}
-            >
-              {m.label}
-            </button>
-          ))}
+    <section className="rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur p-5 shadow-sm border border-black/5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <p className="text-sm text-sky-700 font-semibold">Power Quote</p>
+          <h2 className="mt-1 text-xl leading-snug font-medium text-slate-800 dark:text-slate-100">“{quote}”</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            {moods.find(m => m.key === active)?.tip}
+          </p>
         </div>
-        <p className="mt-3 text-sm text-slate-600">
-          {mood === 'stressed' && 'Saas lamba. 1 minute mein sab halka lagne lagega — tu akela nahi.'}
-          {mood === 'tired' && 'Aaj dheere sahi, par rukna nahi. Paani pee, thoda stretch kar.'}
-          {mood === 'calm' && 'Yahi flow banaye rakh — gentle aur focused.'}
-          {mood === 'hopeful' && 'Ussi hope ko action mein badal — ek chhota next step.'}
-          {mood === 'focused' && 'Laser jaisa focus — distractions ko side mein rakh.'}
-        </p>
+        <div className="grid grid-cols-5 gap-2">
+          {moods.map((m) => {
+            const Icon = m.icon;
+            const isActive = active === m.key;
+            return (
+              <button
+                key={m.key}
+                onClick={() => setActive(m.key)}
+                className={`relative h-10 w-10 rounded-xl flex items-center justify-center text-white transition shadow ${
+                  isActive ? `${m.color} ring-4 ${m.ring}` : `${m.color} opacity-70 hover:opacity-100`
+                }`}
+                aria-label={`Mood: ${m.label}`}
+                title={m.label}
+              >
+                <Icon className="h-5 w-5" />
+              </button>
+            );
+          })}
+        </div>
       </div>
     </section>
-  )
+  );
 }
