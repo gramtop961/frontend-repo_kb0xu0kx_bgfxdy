@@ -1,145 +1,90 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { Music, Pause, Play, Sparkles } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
-// Calming water ambience using Web Audio API (filtered noise + slow waves)
+function createWaterAmbience(audioCtx) {
+  // Pink-ish noise generator for calm ambience
+  const bufferSize = 4096;
+  const node = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+  let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+  node.onaudioprocess = function (e) {
+    const output = e.outputBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+      const pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+      b6 = white * 0.115926;
+      output[i] = pink * 0.02; // keep it very soft
+    }
+  };
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 1000;
+  node.connect(filter);
+  const gain = audioCtx.createGain();
+  gain.gain.value = 0.2;
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  return { node, gain };
+}
+
 export default function HeaderBar() {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const audioCtxRef = useRef(null);
-  const gainRef = useRef(null);
-  const sourceRef = useRef(null);
-  const filterRef = useRef(null);
-  const lfoOscRef = useRef(null);
-  const lfoGainRef = useRef(null);
+  const ambienceRef = useRef(null);
 
-  const timeOfDay = useMemo(() => {
-    const h = new Date().getHours();
-    if (h < 5) return 'Raat ka sukoon, kal strong shuruat.';
-    if (h < 12) return 'Subah ho gayi, naya din – naya chance.';
-    if (h < 18) return 'Din beech ka – chhote steps, bada comeback.';
-    return 'Shaam shaant, aaj ka din proud bana.';
+  useEffect(() => {
+    return () => {
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close();
+      }
+    };
   }, []);
 
-  const createWaterBuffer = (ctx) => {
-    const length = ctx.sampleRate * 3; // 3s loop
-    const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
-    for (let ch = 0; ch < 2; ch++) {
-      const data = buffer.getChannelData(ch);
-      for (let i = 0; i < length; i++) {
-        // Smooth pink-ish noise approximation
-        const white = Math.random() * 2 - 1;
-        data[i] = (data[i - 1] || 0) * 0.98 + white * 0.02;
-      }
+  const toggleAmbience = async () => {
+    if (!audioCtxRef.current) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtxRef.current = ctx;
+      ambienceRef.current = createWaterAmbience(ctx);
     }
-    return buffer;
+    if (playing) {
+      audioCtxRef.current.suspend();
+      setPlaying(false);
+    } else {
+      await audioCtxRef.current.resume();
+      setPlaying(true);
+    }
   };
 
-  const startWater = () => {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-
-    // Noise source loop
-    const buffer = createWaterBuffer(ctx);
-    const src = ctx.createBufferSource();
-    src.buffer = buffer;
-    src.loop = true;
-
-    // Gentle lowpass filter with slow LFO for wave movement
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 800; // base
-
-    const lfoOsc = ctx.createOscillator();
-    lfoOsc.type = 'sine';
-    lfoOsc.frequency.value = 0.08; // very slow
-
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 300; // LFO depth on frequency
-
-    const gain = ctx.createGain();
-    gain.gain.value = 0.0001; // start quiet
-
-    // Wire
-    lfoOsc.connect(lfoGain);
-    lfoGain.connect(filter.frequency);
-    src.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-
-    // Start
-    src.start();
-    lfoOsc.start();
-
-    // Smooth fade in
-    gain.gain.exponentialRampToValueAtTime(0.03, ctx.currentTime + 1.2);
-
-    audioCtxRef.current = ctx;
-    gainRef.current = gain;
-    sourceRef.current = src;
-    filterRef.current = filter;
-    lfoOscRef.current = lfoOsc;
-    lfoGainRef.current = lfoGain;
-    setIsPlaying(true);
-  };
-
-  const stopWater = () => {
-    try {
-      const ctx = audioCtxRef.current;
-      const gain = gainRef.current;
-      const src = sourceRef.current;
-      const lfo = lfoOscRef.current;
-      if (ctx && gain && src) {
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
-        setTimeout(() => {
-          try { src.stop(); } catch {}
-          try { lfo && lfo.stop(); } catch {}
-          ctx.close();
-        }, 900);
-      }
-    } catch {}
-    setIsPlaying(false);
-  };
-
-  const togglePlay = () => {
-    if (isPlaying) stopWater();
-    else startWater();
-  };
+  const hour = new Date().getHours();
+  const greeting = hour < 5
+    ? 'Raat ka shaant focus'
+    : hour < 12
+      ? 'Subah ki shuruaat strong!'
+      : hour < 17
+        ? 'Dupahar ka momentum on'
+        : 'Shaam ki finishing strong';
 
   return (
-    <header className="w-full rounded-2xl bg-gradient-to-r from-sky-600 via-sky-500 to-indigo-500 text-white p-5 shadow-lg">
-      <div className="flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-20 backdrop-blur supports-[backdrop-filter]:bg-white/40 bg-white/60 dark:bg-neutral-900/60 border-b border-black/5 dark:border-white/10">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
-            <Sparkles className="h-6 w-6" />
-          </div>
+          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 shadow-inner" />
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Gaurav Version 2.0 – The Comeback App</h1>
-            <p className="text-white/90 text-sm">Tu ruk gaya hai Gaurav… lekin yahin se comeback shuru hota hai.</p>
+            <h1 className="text-lg font-semibold tracking-tight">Gaurav 2.0 – The Comeback</h1>
+            <p className="text-xs text-neutral-600 dark:text-neutral-300">{greeting}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:block text-sm text-white/90">{timeOfDay}</span>
-          <button
-            onClick={togglePlay}
-            className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium shadow-md transition active:scale-[0.98] ${
-              isPlaying ? 'bg-white text-sky-700' : 'bg-white/20 text-white hover:bg-white/25'
-            }`}
-            aria-label={isPlaying ? 'Pause water ambience' : 'Play water ambience'}
-          >
-            <Music className="h-4 w-4" />
-            {isPlaying ? (
-              <>
-                <Pause className="h-4 w-4" />
-                <span>Pause Calm Water</span>
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" />
-                <span>Play Calm Water</span>
-              </>
-            )}
-          </button>
-        </div>
+        <button
+          onClick={toggleAmbience}
+          className="inline-flex items-center gap-2 rounded-full border border-black/10 dark:border-white/10 px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5 transition"
+        >
+          <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: playing ? '#22c55e' : '#ef4444' }} />
+          {playing ? 'Calm ambience: On' : 'Calm ambience: Off'}
+        </button>
       </div>
     </header>
   );
