@@ -7,7 +7,7 @@ const PLAYLISTS = {
   ],
   Energy: [
     { title: 'Beast Mode', url: 'https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7AP' },
-    { title: 'Motivation Mix', url: 'https://music.youtube.com/playlist?list=PL' },
+    { title: 'Hype', url: 'https://open.spotify.com/playlist/37i9dQZF1DXdxcBWuJkbcy' },
   ],
   Calm: [
     { title: 'Rain & Thunder', url: 'https://open.spotify.com/playlist/37i9dQZF1DXbvABJXBIyiY' },

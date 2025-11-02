@@ -1,8 +1,7 @@
 import React from 'react';
 import HeaderBar from './components/HeaderBar.jsx';
 import PowerQuotes from './components/PowerQuotes.jsx';
-import MusicAndMood from './components/MusicAndMood.jsx';
-import TrackersPanel from './components/TrackersPanel.jsx';
+import MainGrid from './components/MainGrid.jsx';
 
 export default function App() {
   return (
@@ -10,16 +9,11 @@ export default function App() {
       <HeaderBar />
 
       <main className="max-w-6xl mx-auto px-4 py-8 grid gap-6">
+        {/* Keep the existing hero sections visible */}
         <PowerQuotes />
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="md:col-span-2">
-            <MusicAndMood />
-          </div>
-          <div className="md:col-span-1">
-            <TrackersPanel />
-          </div>
-        </div>
+        {/* Show all interactive modules in a clean grid */}
+        <MainGrid />
       </main>
 
       <footer className="py-8">
