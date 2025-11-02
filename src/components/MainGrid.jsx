@@ -3,6 +3,7 @@ import QuoteAndMood from './QuoteAndMood';
 import PhasesDashboard from './PhasesDashboard';
 import MinuteOfCalm from './MinuteOfCalm';
 import TrackersPanel from './TrackersPanel';
+import RewardsPanel from './RewardsPanel';
 
 export default function MainGrid() {
   return (
@@ -14,6 +15,7 @@ export default function MainGrid() {
       <div className="lg:col-span-1 space-y-6">
         <MinuteOfCalm />
         <TrackersPanel />
+        <RewardsPanel />
       </div>
     </div>
   );

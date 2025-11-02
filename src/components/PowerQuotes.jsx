@@ -21,10 +21,29 @@ const QUOTES = [
     text: "You do not rise to the level of your goals. You fall to the level of your systems.",
     author: "James Clear",
   },
+  {
+    text: "Kal se nahi, aaj se — bas ek chhota step.",
+    author: "Grit",
+  },
+  {
+    text: "Your future self is watching. Make him proud.",
+    author: "Anonymous",
+  },
 ];
 
+function dailyIndex(len) {
+  const today = new Date();
+  const key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash << 5) - hash + key.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash) % len;
+}
+
 function getTodayQuote() {
-  const idx = new Date().getDate() % QUOTES.length;
+  const idx = dailyIndex(QUOTES.length);
   return QUOTES[idx];
 }
 

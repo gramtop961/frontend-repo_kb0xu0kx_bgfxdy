@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Moon, Leaf, Heart, Flame, Target, Dumbbell, Sparkles, Check } from 'lucide-react';
+import { CheckCircle2, Moon, Leaf, Heart, Flame, Target, Dumbbell, Sparkles, Check, ChevronRight } from 'lucide-react';
 
-function PhaseCard({ title, subtitle, color, items, action, active }) {
+function PhaseCard({ title, subtitle, color, items, action, active, children }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md">
       <div
@@ -33,6 +33,7 @@ function PhaseCard({ title, subtitle, color, items, action, active }) {
           <span>{active ? 'In Progress' : action.label}</span>
         </button>
       )}
+      {children}
     </div>
   );
 }
@@ -40,6 +41,14 @@ function PhaseCard({ title, subtitle, color, items, action, active }) {
 export default function PhasesDashboard() {
   const [started, setStarted] = useState(null); // 'p1' | 'p2' | 'p3' | null
   const [toast, setToast] = useState('');
+  const [p2Step, setP2Step] = useState(() => {
+    try {
+      const raw = localStorage.getItem('p2_step');
+      return raw ? Number(raw) : 0; // 0..3
+    } catch {
+      return 0;
+    }
+  });
 
   useEffect(() => {
     if (!toast) return;
@@ -47,11 +56,34 @@ export default function PhasesDashboard() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  const reward = (title, points = 5) => {
+    window.dispatchEvent(new CustomEvent('reward-earned', { detail: { title, points } }));
+  };
+
   const trigger = (key, message) => {
     setStarted(key);
     setToast(message);
+    reward(`${message}`, 5);
     if (navigator?.vibrate) {
       try { navigator.vibrate(15); } catch { /* no-op */ }
+    }
+  };
+
+  const setStep = (n) => {
+    setP2Step(n);
+    try { localStorage.setItem('p2_step', String(n)); } catch {}
+    if (n === 3) {
+      setToast('Phase 2 completed — Rebuild unlocked!');
+      reward('Phase 2 Completed', 20);
+      if (navigator?.vibrate) {
+        try { navigator.vibrate([15, 30, 15]); } catch {}
+      }
+    } else {
+      setToast(`Phase 2: Step ${n} done`);
+      reward(`Phase 2: Step ${n} completed`, 8);
+      if (navigator?.vibrate) {
+        try { navigator.vibrate(10); } catch {}
+      }
     }
   };
 
@@ -108,7 +140,33 @@ export default function PhasesDashboard() {
             onClick: () => trigger('p2', 'Phase 2 – energy up, relations up!'),
           }}
           active={started === 'p2'}
-        />
+        >
+          {/* 3 steps inline stepper for Phase 2 */}
+          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+            <p className="text-xs font-medium text-emerald-800 mb-2 flex items-center gap-2">
+              <ChevronRight className="h-4 w-4" /> Phase 2 Steps
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setStep(n)}
+                  className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${
+                    p2Step >= n
+                      ? 'bg-emerald-600 text-white border-emerald-700'
+                      : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                  }`}
+                  aria-pressed={p2Step >= n}
+                >
+                  {p2Step >= n ? 'Completed' : `Step ${n}`}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-[11px] text-emerald-700">
+              {p2Step === 3 ? 'All three steps done — awesome progress!' : 'Tap each step as you finish it. Last step marks Phase 2 completed.'}
+            </p>
+          </div>
+        </PhaseCard>
 
         <PhaseCard
           title="Phase 3: Rise & Success"
